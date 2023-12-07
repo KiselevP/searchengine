@@ -8,7 +8,7 @@ public class Site
 {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id;
     @Column(nullable = false)
     private IndexingStatus indexingStatus;
     @Column(nullable = false)
