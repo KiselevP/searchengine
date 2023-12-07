@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class Site {
+public class IndexedSite {
     private String url;
     private String name;
 }

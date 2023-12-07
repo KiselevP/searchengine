@@ -9,8 +9,8 @@ import searchengine.services.StatisticsService;
 
 @RestController
 @RequestMapping("/api")
-public class ApiController {
-
+public class ApiController
+{
     private final StatisticsService statisticsService;
 
     public ApiController(StatisticsService statisticsService) {
