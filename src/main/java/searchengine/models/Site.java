@@ -9,7 +9,7 @@ public class Site
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "ENUM('INDEXING', 'INDEXED', 'FAILED')")
     private IndexingStatus indexingStatus;
     @Column(nullable = false)
     private LocalDateTime statusTime;
