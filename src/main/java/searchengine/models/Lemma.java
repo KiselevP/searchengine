@@ -6,10 +6,11 @@ import javax.persistence.*;
 public class Lemma
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @Column(nullable = false)
-    private Integer siteId;
+    @ManyToOne
+    @JoinColumn(name = "site_id", nullable = false)
+    private Site siteId;
     @Column(nullable = false)
     private String lemma;
     @Column(nullable = false)

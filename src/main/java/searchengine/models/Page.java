@@ -1,17 +1,19 @@
 package searchengine.models;
 
+import org.springframework.stereotype.Indexed;
+
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 public class Page
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @Column(nullable = false)
-    private Integer siteId;
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @ManyToOne
+    @JoinColumn(name = "site_id", unique = true, nullable = false)
+    private Site siteId;
+    @Column(name = "path", columnDefinition = "TEXT(4096) NOT NULL, FULLTEXT KEY PATH_KEY (path)")
     private String path;
     @Column(nullable = false)
     private Integer code;

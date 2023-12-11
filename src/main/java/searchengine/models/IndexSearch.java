@@ -6,12 +6,14 @@ import javax.persistence.*;
 public class IndexSearch
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @Column(nullable = false)
-    private Integer pageId;
-    @Column(nullable = false)
-    private Integer lemmaId;
+    @OneToOne
+    @JoinColumn(name = "page_id", unique = true, nullable = false)
+    private Page pageId;
+    @OneToOne
+    @JoinColumn(name = "lemma_id", unique = true, nullable = false)
+    private Lemma lemmaId;
     @Column(nullable = false)
     private Float lemmaRank;
 }

@@ -7,13 +7,13 @@ import java.time.*;
 public class Site
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @Column(nullable = false, columnDefinition = "ENUM('INDEXING', 'INDEXED', 'FAILED')")
     private IndexingStatus indexingStatus;
     @Column(nullable = false)
     private LocalDateTime statusTime;
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String lastError;
     @Column(nullable = false)
     private String url;
