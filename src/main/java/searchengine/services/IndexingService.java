@@ -1,4 +1,6 @@
 package searchengine.services;
 
-public interface IndexingService {
+public interface IndexingService
+{
+    void executeIndexing();
 }

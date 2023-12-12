@@ -1,7 +1,5 @@
 package searchengine.models;
 
-import org.springframework.stereotype.Indexed;
-
 import javax.persistence.*;
 
 @Entity
@@ -13,7 +11,7 @@ public class Page
     @ManyToOne
     @JoinColumn(name = "site_id", unique = true, nullable = false)
     private Site siteId;
-    @Column(name = "path", columnDefinition = "TEXT(4096) NOT NULL, FULLTEXT KEY PATH_KEY (path)")
+    @Column(name = "path", columnDefinition = "TEXT(255) NOT NULL, FULLTEXT KEY PATH_KEY (path)")
     private String path;
     @Column(nullable = false)
     private Integer code;
