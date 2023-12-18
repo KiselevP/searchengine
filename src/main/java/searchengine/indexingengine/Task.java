@@ -1,5 +1,7 @@
 package searchengine.indexingengine;
 
+import searchengine.models.Site;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -7,31 +9,36 @@ import java.util.Map;
 import java.util.concurrent.RecursiveAction;
 
 public class Task extends RecursiveAction {
-    private final Link link;
-    private static final Map<String, Link> usedLink = new LinkedHashMap<>();
+    private final Site site;
+    private static final Map<String, Site> usedLink = new LinkedHashMap<>();
     private final List<Task> tasks = new ArrayList<>();
 
-    public Task(Link link) {
-        this.link = link;
+    private boolean isError;
+    public boolean isError() {
+        return isError;
+    }
+    public void setError(boolean error) {
+        isError = error;
+    }
+
+    public Task(Site site) {
+        this.site = site;
     }
 
     @Override
     protected void compute()
     {
-        if (!usedLink.containsKey(link.getAddress()))
+        if (!usedLink.containsKey(site.getUrl()))
         {
-            usedLink.put(link.getAddress(), link);
-            HtmlParser parser = new HtmlParser(link);
+            usedLink.put(site.getUrl(), site);
+            HtmlParser parser = new HtmlParser(site);
             if (!parser.getList().isEmpty())
             {
-                for (Link childLink : parser.getList())
+                for (Site childSite : parser.getList())
                 {
-                    if (!usedLink.containsKey(childLink.getAddress()))
+                    if (!usedLink.containsKey(childSite.getUrl()))
                     {
-                        childLink.setLevel(link.getLevel() + 1);
-                        childLink.setParentAddress(link.getAddress());
-
-                        Task task = new Task(childLink);
+                        Task task = new Task(childSite);
                         task.fork();
                         tasks.add(task);
                     }

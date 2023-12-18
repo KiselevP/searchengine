@@ -8,6 +8,5 @@ import java.util.List;
 public class StatisticsData
 {
     private TotalStatistics total;
-
     private List<DetailedStatisticsItem> detailed;
 }

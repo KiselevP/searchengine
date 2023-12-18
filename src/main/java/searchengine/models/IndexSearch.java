@@ -1,8 +1,11 @@
 package searchengine.models;
 
+import lombok.Data;
+
 import javax.persistence.*;
 
 @Entity
+@Data
 public class IndexSearch
 {
     @Id
