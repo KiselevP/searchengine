@@ -1,6 +1,6 @@
 package searchengine.indexingengine;
 
-import searchengine.models.Site;
+import searchengine.dto.indexing.IndexingPageItem;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.concurrent.RecursiveAction;
 
 public class Task extends RecursiveAction {
-    private final Site site;
-    private static final Map<String, Site> usedLink = new LinkedHashMap<>();
+    private final IndexingPageItem pageItem;
+    private static final Map<String, IndexingPageItem> usedLink = new LinkedHashMap<>();
     private final List<Task> tasks = new ArrayList<>();
 
     private boolean isError;
@@ -21,22 +21,22 @@ public class Task extends RecursiveAction {
         isError = error;
     }
 
-    public Task(Site site) {
-        this.site = site;
+    public Task(IndexingPageItem pageItem) {
+        this.pageItem = pageItem;
     }
 
     @Override
     protected void compute()
     {
-        if (!usedLink.containsKey(site.getUrl()))
+        if (!usedLink.containsKey(pageItem.getPath()))
         {
-            usedLink.put(site.getUrl(), site);
-            HtmlParser parser = new HtmlParser(site);
+            usedLink.put(pageItem.getPath(), pageItem);
+            HtmlParser parser = new HtmlParser(pageItem);
             if (!parser.getList().isEmpty())
             {
-                for (Site childSite : parser.getList())
+                for (IndexingPageItem childSite : parser.getList())
                 {
-                    if (!usedLink.containsKey(childSite.getUrl()))
+                    if (!usedLink.containsKey(childSite.getPath()))
                     {
                         Task task = new Task(childSite);
                         task.fork();

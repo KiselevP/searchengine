@@ -9,6 +9,6 @@ import java.util.List;
 @Data
 @Component
 @ConfigurationProperties(prefix = "indexing-settings")
-public class ConfigSitesList {
-    private List<ConfigSite> sites;
+public class SitesConfigList {
+    private List<SiteConfig> sites;
 }

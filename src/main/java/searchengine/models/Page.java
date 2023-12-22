@@ -18,8 +18,6 @@ public class Page
     private String path;
     @Column(nullable = false)
     private Integer code;
-    @Column(nullable = false)
-    private String url;
     @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content;
 }

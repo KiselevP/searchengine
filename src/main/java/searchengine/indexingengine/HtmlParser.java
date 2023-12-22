@@ -1,13 +1,13 @@
 package searchengine.indexingengine;
 
-import lombok.Getter;
+import lombok.Data;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import searchengine.models.Site;
-import searchengine.services.StatisticsServiceImpl;
+import searchengine.dto.indexing.IndexingPageItem;
+import searchengine.services.IndexingServiceImpl;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -18,8 +18,9 @@ import java.util.List;
 
 import static java.lang.Thread.sleep;
 
+@Data
 public class HtmlParser {
-    private List<Site> list;
+    private List<IndexingPageItem> list;
 
     private boolean isError;
 
@@ -31,41 +32,42 @@ public class HtmlParser {
         isError = error;
     }
 
-    private boolean isLink(Site site) {
+    private boolean isLink(IndexingPageItem pageItem) {
         String regex = "http[s]?://[^#, \\s]*\\.?[a-z]*\\.[a-z]{2,4}[^#,\\s]*";
-        return !list.contains(site) && site.getUrl().matches(regex);
+        return !list.contains(pageItem) && pageItem.getPath().matches(regex);
     }
 
-    public HtmlParser(Site site) {
-        synchronized (site) {
+    public HtmlParser(IndexingPageItem pageItem) {
+        synchronized (pageItem) {
             try {
                 sleep(150);
                 list = new ArrayList<>();
-                Document doc = Jsoup.connect(site.getUrl())
+                Document doc = Jsoup.connect(pageItem.getPath())
                         .ignoreHttpErrors(true)
                         .ignoreContentType(true).timeout(2000)
                         .followRedirects(false).get();
 
                 Connection.Response response =
-                        Jsoup.connect(site.getUrl())
+                        Jsoup.connect(pageItem.getPath())
                             .followRedirects(false)
                             .execute();
-                response.statusCode();
+                pageItem.setCode(response.statusCode());
+                pageItem.setContent(doc.html());
 
-//                URL urlElem = new URL(site.getUrl());
+//                URL urlElem = new URL(pageItem.getUrl());
 //                HttpURLConnection connection = (HttpURLConnection) urlElem.openConnection();
 //                int respCod = connection.getResponseCode();
 
                 Elements elements = doc.select("a");
                 for (Element element : elements) {
                     String url = element.absUrl("href");
-                    Site linkChild = new Site();
-                    linkChild.setUrl(url);
+                    IndexingPageItem linkChild = new IndexingPageItem();
+                    linkChild.setPath(url);
                     if (isLink(linkChild)
-                            && StatisticsServiceImpl.isValidAddress(linkChild.getUrl())
-                            && !linkChild.getUrl().contains(".jpg")
-                            && !linkChild.getUrl().contains(".png")
-                            && !linkChild.getUrl().contains(".pdf"))
+                            && IndexingServiceImpl.isValidAddress(linkChild.getPath())
+                            && !linkChild.getPath().contains(".jpg")
+                            && !linkChild.getPath().contains(".png")
+                            && !linkChild.getPath().contains(".pdf"))
                     {
                         list.add(linkChild);
                     }
