@@ -1,4 +1,4 @@
-package searchengine.indexingengine;
+package searchengine.services.indexing.indexing_tools;
 
 import searchengine.dto.indexing.IndexingPageItem;
 

@@ -1,4 +1,4 @@
-package searchengine.indexingengine;
+package searchengine.services.indexing.indexing_tools;
 
 import lombok.Data;
 import org.jsoup.Connection;
@@ -7,12 +7,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import searchengine.dto.indexing.IndexingPageItem;
-import searchengine.services.IndexingServiceImpl;
+import searchengine.services.indexing.IndexingServiceImpl;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 

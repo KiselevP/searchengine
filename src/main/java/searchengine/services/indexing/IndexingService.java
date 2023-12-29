@@ -1,7 +1,7 @@
-package searchengine.services;
+package searchengine.services.indexing;
 
 import searchengine.dto.indexing.IndexingResponse;
 
 public interface IndexingService {
-    IndexingResponse executeIndexing();
+    IndexingResponse startIndexing();
 }
