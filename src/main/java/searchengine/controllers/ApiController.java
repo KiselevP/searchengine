@@ -2,11 +2,14 @@ package searchengine.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import searchengine.dto.indexing.IndexingResponse;
+import searchengine.dto.search.SearchResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.services.indexing.IndexingService;
+import searchengine.services.search.SearchService;
 import searchengine.services.statistics.StatisticsService;
 
 @RestController
@@ -14,23 +17,15 @@ import searchengine.services.statistics.StatisticsService;
 public class ApiController
 {
     private final StatisticsService statisticsService;
-    private final IndexingService indexingService;
 
-    public ApiController(StatisticsService statisticsService, IndexingService indexingService)
+    public ApiController(StatisticsService statisticsService)
     {
         this.statisticsService = statisticsService;
-        this.indexingService = indexingService;
     }
 
     @GetMapping("/statistics")
     public ResponseEntity<StatisticsResponse> statistics()
     {
         return ResponseEntity.ok(statisticsService.getStatistics());
-    }
-
-    @GetMapping("/startIndexing")
-    public ResponseEntity<IndexingResponse> startIndexing()
-    {
-        return ResponseEntity.ok(indexingService.startIndexing());
     }
 }

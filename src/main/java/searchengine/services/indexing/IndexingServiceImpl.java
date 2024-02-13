@@ -5,10 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.config.SiteConfig;
 import searchengine.config.SitesConfigList;
+import searchengine.dto.indexing.IndexingPageItem;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.models.IndexingStatus;
 import searchengine.models.Site;
-import searchengine.repositories.SiteRepository;
+import searchengine.models.repositories.PageRepository;
+import searchengine.models.repositories.SiteRepository;
+import searchengine.services.indexing.indexing_tools.Task;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,38 +20,38 @@ import java.util.concurrent.ForkJoinPool;
 @Service
 @RequiredArgsConstructor
 @Data
-public class IndexingServiceImpl implements IndexingService
-{
+public class IndexingServiceImpl implements IndexingService {
     private final SitesConfigList sitesConfigList;
 
-    private final SiteRepository siteRepository;
+    private static List<Site> sitesForValid;
 
-    public IndexingResponse startIndexing()
-    {
-        List<SiteConfig> configListSites = sitesConfigList.getSites();
+    private final SiteRepository siteRepository;
+    private final PageRepository pageRepository;
+
+    private static Thread indexingThread;
+
+    private static boolean is_alive;
+
+    public IndexingResponse startIndexing() {
+        siteRepository.deleteAll();
+        pageRepository.deleteAll();
 
         IndexingResponse indexingResponse = new IndexingResponse();
 
-        if (!configListSites.isEmpty()) {
-            new Thread(() -> {
+        if (is_alive) {
+            indexingResponse.setResult(false);
+            indexingResponse.setError("Индексация уже запущена");
+        } else {
+            is_alive = true;
+            indexingResponse.setResult(true);
+            List<SiteConfig> configListSites = sitesConfigList.getSites();
 
-                indexingResponse.setResult(true);
-                for (SiteConfig site : configListSites) {
-//                    try (ForkJoinPool pool = new ForkJoinPool(sitesConfigList.getSites().size()))
-//                    {
-//                        IndexingPageItem rootSitePage = new IndexingPageItem();
-//                        rootSitePage.setPath(site.getUrl());
-//                        Task task = new Task(rootSitePage);
-//                        pool.invoke(task);
+            if (configListSites.isEmpty()) {
+                throw new NullPointerException("empty config list");
+            } else {
+                indexingThread = new Thread(() -> {
 
-//                        Site siteCheck = siteRepository.findSiteByName(site.getName());
-//
-//                        if (siteCheck.getIndexingStatus().equals(IndexingStatus.INDEXED))
-//                        {
-//                            indexingResponse.setResult(false);
-//                            indexingResponse.setError("Индексация уже запущена");
-//                        }
-
+                    for (SiteConfig site : configListSites) {
                         Site indexingSite = new Site();
                         indexingSite.setName(site.getName());
                         indexingSite.setStatusTime(LocalDateTime.now());
@@ -56,18 +59,62 @@ public class IndexingServiceImpl implements IndexingService
                         indexingSite.setIndexingStatus(IndexingStatus.INDEXING);
 
                         siteRepository.save(indexingSite);
-//                    }
-//                    catch (Exception e) {
-//                        //
-//                    }
-                }
-            }).start();
+
+                        try (ForkJoinPool pool = new ForkJoinPool(sitesConfigList.getSites().size())) {
+                            IndexingPageItem rootSitePage = new IndexingPageItem();
+                            rootSitePage.setPath(site.getUrl());
+
+                            Site site1 = siteRepository.findSiteByName(site.getName());
+                            rootSitePage.setSiteId(site1.getId());
+
+                            Task task = new Task(rootSitePage);
+                            System.out.println(site.getUrl() + " -> таска запущена");
+                            pool.invoke(task);
+                        } catch (Exception e) {
+                            //
+                        }
+                    }
+                });
+                indexingThread.start();
+            }
+            sitesForValid.addAll(siteRepository.findAll());
+        }
+        return indexingResponse;
+    }
+
+    @Override
+    public IndexingResponse stopIndexing() {
+        IndexingResponse indexingResponse = new IndexingResponse();
+
+        if (!is_alive) {
+            indexingResponse.setResult(false);
+            indexingResponse.setError("Индексация не запущена");
+        } else {
+            indexingThread.interrupt();
+            is_alive = false;
+            indexingResponse.setResult(true);
         }
 
         return indexingResponse;
     }
 
-    public static boolean isValidAddress(String path) {
-        return true;
+    @Override
+    public IndexingResponse startIndexingPage() {
+        IndexingResponse indexingResponse = new IndexingResponse();
+        indexingResponse.setResult(true);
+
+        return indexingResponse;
+    }
+
+    public static boolean isValidAddress(IndexingPageItem page) {
+        int count = 0;
+        for (Site site : sitesForValid) {
+            if (page.getSiteId() == site.getId()) {
+                String rootUrl = site.getUrl();
+                String key = rootUrl.substring(rootUrl.lastIndexOf("://") + 3, rootUrl.lastIndexOf(".") + 1);
+                if (page.getPath().contains(key)) count++;
+            }
+        }
+        return count == 1;
     }
 }
