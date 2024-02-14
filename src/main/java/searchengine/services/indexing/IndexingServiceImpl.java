@@ -14,16 +14,17 @@ import searchengine.models.repositories.SiteRepository;
 import searchengine.services.indexing.indexing_tools.Task;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 @Service
 @RequiredArgsConstructor
-@Data
-public class IndexingServiceImpl implements IndexingService {
+public class IndexingServiceImpl implements IndexingService
+{
     private final SitesConfigList sitesConfigList;
 
-    private static List<Site> sitesForValid;
+    private static List<Site> sitesForValid = new ArrayList<>();
 
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
@@ -46,20 +47,23 @@ public class IndexingServiceImpl implements IndexingService {
             indexingResponse.setResult(true);
             List<SiteConfig> configListSites = sitesConfigList.getSites();
 
+            for (SiteConfig site : configListSites) {
+                Site indexingSite = new Site();
+                indexingSite.setName(site.getName());
+                indexingSite.setStatusTime(LocalDateTime.now());
+                indexingSite.setUrl(site.getUrl());
+                indexingSite.setIndexingStatus(IndexingStatus.INDEXING);
+
+                siteRepository.save(indexingSite);
+            }
+            sitesForValid.addAll(siteRepository.findAll());
+
             if (configListSites.isEmpty()) {
-                throw new NullPointerException("empty config list");
+                throw new NullPointerException("пустой config list");
             } else {
                 indexingThread = new Thread(() -> {
 
                     for (SiteConfig site : configListSites) {
-                        Site indexingSite = new Site();
-                        indexingSite.setName(site.getName());
-                        indexingSite.setStatusTime(LocalDateTime.now());
-                        indexingSite.setUrl(site.getUrl());
-                        indexingSite.setIndexingStatus(IndexingStatus.INDEXING);
-
-                        siteRepository.save(indexingSite);
-
                         try (ForkJoinPool pool = new ForkJoinPool(sitesConfigList.getSites().size())) {
                             IndexingPageItem rootSitePage = new IndexingPageItem();
                             rootSitePage.setPath(site.getUrl());
@@ -68,7 +72,6 @@ public class IndexingServiceImpl implements IndexingService {
                             rootSitePage.setSiteId(site1.getId());
 
                             Task task = new Task(rootSitePage);
-                            System.out.println(site.getUrl() + " -> таска запущена");
                             pool.invoke(task);
                         } catch (Exception e) {
                             //
@@ -77,7 +80,6 @@ public class IndexingServiceImpl implements IndexingService {
                 });
                 indexingThread.start();
             }
-            sitesForValid.addAll(siteRepository.findAll());
         }
         return indexingResponse;
     }

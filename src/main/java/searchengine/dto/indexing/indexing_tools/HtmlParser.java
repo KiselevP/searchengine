@@ -47,7 +47,6 @@ public class HtmlParser
                             && !pageChild.getPath().contains(".png")
                             && !pageChild.getPath().contains(".pdf"))
                     {
-
                         Connection.Response response =
                                 Jsoup.connect(pageItem.getPath())
                                         .followRedirects(false)

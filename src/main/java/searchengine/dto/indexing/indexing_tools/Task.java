@@ -1,19 +1,22 @@
 package searchengine.services.indexing.indexing_tools;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.dto.indexing.IndexingPageItem;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.RecursiveAction;
 
+
+@Service
+@RequiredArgsConstructor
 public class Task extends RecursiveAction
 {
-    private final IndexingPageItem pageItem;
+    private IndexingPageItem pageItem;
     private final List<Task> tasks = new ArrayList<>();
-    private static final Map<String, IndexingPageItem> usedLink = new LinkedHashMap<>();
+
+    @Getter
+    private static final Map<String, IndexingPageItem> usedLink = new HashMap<>();
 
     public Task(IndexingPageItem pageItem) {
         this.pageItem = pageItem;
