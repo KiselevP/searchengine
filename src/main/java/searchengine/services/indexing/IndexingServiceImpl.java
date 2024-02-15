@@ -1,6 +1,6 @@
 package searchengine.services.indexing;
 
-import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.config.SiteConfig;
@@ -11,7 +11,7 @@ import searchengine.models.IndexingStatus;
 import searchengine.models.Site;
 import searchengine.models.repositories.PageRepository;
 import searchengine.models.repositories.SiteRepository;
-import searchengine.services.indexing.indexing_tools.Task;
+import searchengine.dto.indexing.indexing_tools.Task;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,22 +20,22 @@ import java.util.concurrent.ForkJoinPool;
 
 @Service
 @RequiredArgsConstructor
-public class IndexingServiceImpl implements IndexingService
-{
+public class IndexingServiceImpl implements IndexingService {
     private final SitesConfigList sitesConfigList;
-
-    private static List<Site> sitesForValid = new ArrayList<>();
+    private static final List<Site> sitesForValid = new ArrayList<>();
 
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
 
     private static Thread indexingThread;
 
+    @Getter
     private static boolean is_alive;
 
     public IndexingResponse startIndexing() {
         siteRepository.deleteAll();
         pageRepository.deleteAll();
+
 
         IndexingResponse indexingResponse = new IndexingResponse();
 
@@ -62,19 +62,18 @@ public class IndexingServiceImpl implements IndexingService
                 throw new NullPointerException("пустой config list");
             } else {
                 indexingThread = new Thread(() -> {
-
                     for (SiteConfig site : configListSites) {
                         try (ForkJoinPool pool = new ForkJoinPool(sitesConfigList.getSites().size())) {
-                            IndexingPageItem rootSitePage = new IndexingPageItem();
-                            rootSitePage.setPath(site.getUrl());
-
+                            IndexingPageItem rootPage = new IndexingPageItem();
                             Site site1 = siteRepository.findSiteByName(site.getName());
-                            rootSitePage.setSiteId(site1.getId());
 
-                            Task task = new Task(rootSitePage);
+                            rootPage.setSiteId(site1.getId());
+                            rootPage.setPath(site1.getUrl());
+
+                            Task task = new Task(rootPage, pageRepository, siteRepository);
                             pool.invoke(task);
-                        } catch (Exception e) {
-                            //
+                        } catch (RuntimeException e) {
+                            e.getMessage();
                         }
                     }
                 });
@@ -114,9 +113,10 @@ public class IndexingServiceImpl implements IndexingService
             if (page.getSiteId() == site.getId()) {
                 String rootUrl = site.getUrl();
                 String key = rootUrl.substring(rootUrl.lastIndexOf("://") + 3, rootUrl.lastIndexOf(".") + 1);
-                if (page.getPath().contains(key)) count++;
+                if (page.getPath().contains(key)) count = 1;
             }
         }
         return count == 1;
+//        return true;
     }
 }

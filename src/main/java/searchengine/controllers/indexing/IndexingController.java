@@ -20,8 +20,7 @@ public class IndexingController
     }
 
     @GetMapping("/start-indexing")
-    public ResponseEntity<IndexingResponse> startIndexing()
-    {
+    public ResponseEntity<IndexingResponse> startIndexing() throws InterruptedException {
         return ResponseEntity.ok(indexingService.startIndexing());
     }
 

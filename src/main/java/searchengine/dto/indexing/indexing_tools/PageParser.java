@@ -1,4 +1,4 @@
-package searchengine.services.indexing.indexing_tools;
+package searchengine.dto.indexing.indexing_tools;
 
 import lombok.Data;
 import org.jsoup.Connection;
@@ -17,7 +17,7 @@ import java.util.List;
 import static java.lang.Thread.sleep;
 
 @Data
-public class HtmlParser
+public class PageParser
 {
     private List<IndexingPageItem> list;
 
@@ -26,20 +26,29 @@ public class HtmlParser
         return !list.contains(pageItem) && pageItem.getPath().matches(regexPath);
     }
 
-    public HtmlParser(IndexingPageItem pageItem) {
+    public PageParser(IndexingPageItem pageItem) {
         synchronized (pageItem) {
             try {
                 sleep(150);
                 list = new ArrayList<>();
                 Document doc = Jsoup.connect(pageItem.getPath())
-                        .ignoreHttpErrors(false)
+                        .ignoreHttpErrors(true)
                         .ignoreContentType(true).timeout(2000)
                         .followRedirects(false).get();
-
                 Elements elements = doc.select("a");
                 for (Element element : elements) {
                     String url = element.absUrl("href");
                     IndexingPageItem pageChild = new IndexingPageItem();
+
+                    Connection.Response response =
+                            Jsoup.connect(pageItem.getPath())
+                                    .followRedirects(false)
+                                    .execute();
+
+                    pageChild.setPath(url);
+                    pageChild.setSiteId(pageItem.getSiteId());
+                    pageChild.setCode(response.statusCode());
+                    pageChild.setContent(doc.html());
 
                     if (isValidPage(pageChild)
                             && IndexingServiceImpl.isValidAddress(pageChild)
@@ -47,16 +56,6 @@ public class HtmlParser
                             && !pageChild.getPath().contains(".png")
                             && !pageChild.getPath().contains(".pdf"))
                     {
-                        Connection.Response response =
-                                Jsoup.connect(pageItem.getPath())
-                                        .followRedirects(false)
-                                        .execute();
-
-                        pageChild.setPath(url);
-                        pageChild.setSiteId(pageChild.getSiteId());
-                        pageChild.setCode(response.statusCode());
-                        pageChild.setContent(doc.html());
-
                         list.add(pageChild);
                     }
                 }

@@ -6,8 +6,8 @@ import lombok.Data;
 public class IndexingPageItem
 {
     private int id;
-    private int siteId;
     private String path;
-    private Integer code;
+    private int code;
     private String content;
+    private int siteId;
 }

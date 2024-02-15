@@ -21,6 +21,6 @@ public class Site
     private String lastError;
     @Column(nullable = false)
     private String url;
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 }
