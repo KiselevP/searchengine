@@ -1,4 +1,4 @@
-package searchengine.dto.indexing.indexing_tools;
+package searchengine.services.indexing.indexing_tools;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import searchengine.dto.indexing.IndexingPageItem;

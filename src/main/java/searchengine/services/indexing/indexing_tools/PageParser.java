@@ -1,4 +1,4 @@
-package searchengine.dto.indexing.indexing_tools;
+package searchengine.services.indexing.indexing_tools;
 
 import lombok.Data;
 import org.jsoup.Connection;

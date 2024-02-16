@@ -11,7 +11,7 @@ import searchengine.models.IndexingStatus;
 import searchengine.models.Site;
 import searchengine.models.repositories.PageRepository;
 import searchengine.models.repositories.SiteRepository;
-import searchengine.dto.indexing.indexing_tools.Task;
+import searchengine.services.indexing.indexing_tools.Task;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
