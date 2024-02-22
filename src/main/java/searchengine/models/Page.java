@@ -11,7 +11,7 @@ public class Page
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "site_id", nullable = false)
     private Site siteId;
     @Column(name = "path", columnDefinition = "TEXT(255) NOT NULL, FULLTEXT KEY PATH_KEY (path)")

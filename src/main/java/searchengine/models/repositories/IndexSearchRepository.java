@@ -6,10 +6,25 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.models.IndexSearch;
 
-public interface IndexSearchRepository extends JpaRepository<IndexSearch, Integer>
-{
+public interface IndexSearchRepository extends JpaRepository<IndexSearch, Integer> {
     @Modifying
-    @Transactional
-    @Query(value = "TRUNCATE TABLE index_search", nativeQuery = true)
-    void truncateTable();
+    @Query(
+            value = "SET FOREIGN_KEY_CHECKS = 0;",
+            nativeQuery = true
+    )
+    void setForeignKeyOnZero();
+
+    @Modifying
+    @Query(
+            value = "SET FOREIGN_KEY_CHECKS = 1",
+            nativeQuery = true
+    )
+    void setForeignKeyOnOne();
+
+    @Modifying
+    @Query(
+            value = "TRUNCATE `index_search`",
+            nativeQuery = true
+    )
+    void deleteAllElements();
 }
