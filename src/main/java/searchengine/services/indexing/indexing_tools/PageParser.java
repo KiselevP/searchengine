@@ -1,67 +1,77 @@
 package searchengine.services.indexing.indexing_tools;
 
 import lombok.Data;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import searchengine.dto.indexing.IndexingPageItem;
+import org.springframework.stereotype.Service;
+import searchengine.dto.indexing.PageDto;
 import searchengine.services.indexing.IndexingImpl;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.Thread.sleep;
 
 @Data
-public class PageParser
-{
-    private Map<String, IndexingPageItem> mapParsingPages;
+@Service
+public class PageParser {
 
+    private final Map<String, PageDto> mapParsingPages = new ConcurrentHashMap<>();
 
-    private boolean isValidPage(IndexingPageItem pageItem) {
-        String regexPath = "https?://[^#, \\s]*\\.?[a-z]*\\.[a-z]{2,4}[^#,\\s]*";
+    private boolean isValidPage(PageDto pageItem) {
 
-        return !mapParsingPages.containsKey(pageItem.getPath())
-                && pageItem.getPath().matches(regexPath)
-                && IndexingImpl.isValidAddress(pageItem)
-                && !pageItem.getPath().contains(".jpg")
-                && !pageItem.getPath().contains(".png")
-                && !pageItem.getPath().contains(".pdf")
-                && !pageItem.getPath().contains(".css");
+        String regexPath = "^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+
+        return !mapParsingPages.containsKey(pageItem.getPath()) &&
+                pageItem.getPath().matches(regexPath) &&
+                IndexingImpl.isValidPath(pageItem) &&
+                !pageItem.getPath().contains(".jpg") &&
+                !pageItem.getPath().contains(".png") &&
+                !pageItem.getPath().contains(".pdf") &&
+                !pageItem.getPath().contains(".css");
     }
 
-    public PageParser(IndexingPageItem pageItem) {
+    public PageParser(PageDto pageItem) {
         synchronized (pageItem) {
             try {
                 sleep(150);
-                mapParsingPages = new HashMap<>();
-                Document doc = Jsoup.connect(pageItem.getPath())
+                int responseCode = Jsoup.connect(pageItem.getPath())
+                        .timeout(2000)
                         .ignoreHttpErrors(true)
-                        .ignoreContentType(true).timeout(2000)
-                        .followRedirects(false).get();
+                        .followRedirects(false)
+                        .ignoreContentType(true)
+                        .execute().statusCode();
+
+                sleep(150);
+                Document doc = Jsoup.connect(pageItem.getPath())
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
+                        .referrer("http://www.google.com")
+                        .ignoreHttpErrors(true)
+                        .ignoreContentType(true)
+                        .timeout(2000)
+                        .followRedirects(false)
+                        .get();
+
                 Elements elements = doc.select("a");
+
                 for (Element element : elements) {
                     String url = element.absUrl("href");
-                    IndexingPageItem newPages = new IndexingPageItem();
 
-                    Connection.Response response =
-                            Jsoup.connect(pageItem.getPath())
-                                    .followRedirects(false)
-                                    .execute();
+                    PageDto childPage = PageDto.builder()
+                            .path(url)
+                            .siteId(pageItem.getSiteId())
+                            .code(responseCode)
+                            .build();
 
-                    newPages.setPath(url);
-                    newPages.setSiteId(pageItem.getSiteId());
-                    newPages.setCode(response.statusCode());
-                    newPages.setContent(doc.html());
-
-                    if (isValidPage(newPages)) {
-                        mapParsingPages.put(newPages.getPath(), newPages);
+                    if (isValidPage(childPage)) {
+                        mapParsingPages.put(childPage.getPath(), childPage);
                     }
                 }
+
             } catch (SocketTimeoutException e) {
                 System.out.println("Таймаут при чтении данных");
             } catch (IOException | InterruptedException e) {

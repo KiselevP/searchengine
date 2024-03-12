@@ -1,5 +1,6 @@
 package searchengine.controllers.indexing;
 
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,30 +10,31 @@ import searchengine.dto.indexing.IndexingResponse;
 import searchengine.services.indexing.IndexingService;
 
 @RestController
-@RequestMapping("/api")
-public class IndexingController
-{
+@AllArgsConstructor
+@RequestMapping("/api/v1/indexing/")
+public class IndexingController {
+
     private final IndexingService indexingService;
 
-    public IndexingController(IndexingService indexingService)
-    {
-        this.indexingService = indexingService;
-    }
+    @GetMapping("/start")
+    public ResponseEntity<IndexingResponse> startIndexing() {
 
-    @GetMapping("/start-indexing")
-    public ResponseEntity<IndexingResponse> startIndexing() throws InterruptedException {
         return ResponseEntity.ok(indexingService.startIndexing());
+
     }
 
-    @GetMapping("/stop-indexing")
-    public ResponseEntity<IndexingResponse> stopIndexing()
-    {
+    @GetMapping("/stop")
+    public ResponseEntity<IndexingResponse> stopIndexing() {
+
         return ResponseEntity.ok(indexingService.stopIndexing());
+
     }
 
-    @PostMapping("/index-page")
-    public ResponseEntity<IndexingResponse> startIndexingPage()
-    {
+    @PostMapping("/start-page")
+    public ResponseEntity<IndexingResponse> startIndexingPage() {
+
         return ResponseEntity.ok(indexingService.startIndexingPage());
+
     }
+
 }
