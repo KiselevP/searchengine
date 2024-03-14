@@ -7,15 +7,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.config.SitesConfigList;
 import searchengine.dto.indexing.IndexingResponse;
+import searchengine.dto.indexing.PageDto;
 import searchengine.dto.indexing.SiteDto;
 import searchengine.models.IndexingStatus;
 import searchengine.models.Site;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
-import searchengine.services.indexing.indexing_tools.IndexingTask;
+import searchengine.services.indexing.indexing_tools.PagesCrawler;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,6 +33,10 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Getter
     private static final List<SiteDto> sitesForValid = new ArrayList<>();
+
+    @Getter
+    @Setter
+    private static volatile HashMap<String, PageDto> listVisitedPages;
 
     @Getter
     public static AtomicBoolean is_alive;
@@ -57,17 +63,17 @@ public class IndexingServiceImpl implements IndexingService {
 
             ForkJoinPool pool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
             try {
-                List<IndexingTask> taskList = new ArrayList<>();
+                List<PagesCrawler> taskList = new ArrayList<>();
 
                 for (SiteDto rootSite : sitesForValid) {
 
-                    IndexingTask indexingTask = new IndexingTask(rootSite.getUrl());
+                    PagesCrawler indexingTask = new PagesCrawler(rootSite.getUrl());
 
                     pool.invoke(indexingTask);
                     taskList.add(indexingTask);
                 }
 
-                for (IndexingTask task : taskList) {
+                for (PagesCrawler task : taskList) {
                     task.join();
                 }
 
