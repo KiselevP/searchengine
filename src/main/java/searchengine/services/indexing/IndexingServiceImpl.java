@@ -6,28 +6,33 @@ import lombok.Setter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.config.SitesConfigList;
-import searchengine.dto.indexing.PageDto;
 import searchengine.dto.indexing.IndexingResponse;
+import searchengine.dto.indexing.SiteDto;
 import searchengine.models.IndexingStatus;
 import searchengine.models.Site;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
+import searchengine.services.indexing.indexing_tools.IndexingTask;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 @Service
 @AllArgsConstructor
-public class IndexingImpl implements IndexingService {
+public class IndexingServiceImpl implements IndexingService {
+
+    private static final Logger logger = Logger.getAnonymousLogger();
 
     private final SitesConfigList sitesConfigList;
 
-    private static final List<Site> sitesForValid = new ArrayList<>();
+    @Getter
+    private static final List<SiteDto> sitesForValid = new ArrayList<>();
 
     @Getter
-    @Setter
     public static AtomicBoolean is_alive;
 
     private final SiteRepository siteRepository;
@@ -41,7 +46,7 @@ public class IndexingImpl implements IndexingService {
 
         if (is_alive.get()) {
 
-            indexingResponse.setResult(true);
+            indexingResponse.setResult(false);
             indexingResponse.setError("Индексация уже запущена");
 
             return indexingResponse;
@@ -50,7 +55,27 @@ public class IndexingImpl implements IndexingService {
             is_alive.set(true);
             beforeIndexingEvent();
 
+            ForkJoinPool pool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+            try {
+                List<IndexingTask> taskList = new ArrayList<>();
 
+                for (SiteDto rootSite : sitesForValid) {
+
+                    IndexingTask indexingTask = new IndexingTask(rootSite.getUrl());
+
+                    pool.invoke(indexingTask);
+                    taskList.add(indexingTask);
+                }
+
+                for (IndexingTask task : taskList) {
+                    task.join();
+                }
+
+            } catch (Exception rte) {
+                logger.info(rte.getMessage());
+            } finally {
+                pool.shutdown();
+            }
 
             indexingResponse.setResult(true);
         }
@@ -90,18 +115,6 @@ public class IndexingImpl implements IndexingService {
 
     }
 
-    // TODO: дописать-додумать
-    public static boolean isValidPath(PageDto page) {
-
-        int count = 0;
-        for (Site site : sitesForValid) {
-            String rootUrl = site.getUrl();
-            String key = rootUrl.substring(rootUrl.lastIndexOf("://") + 3, rootUrl.lastIndexOf(".") + 1);
-            if (page.getPath().contains(key)) count = 1;
-        }
-        return count == 1;
-
-    }
 
     @Transactional
     private void beforeIndexingEvent() {
@@ -125,7 +138,18 @@ public class IndexingImpl implements IndexingService {
                                 .build()
                 )
         );
-        sitesForValid.addAll(siteRepository.findAll());
+
+        siteRepository.findAll().forEach(site ->
+            sitesForValid.add(
+                    SiteDto.builder()
+                            .id(site.getId())
+                            .indexingStatus(site.getIndexingStatus())
+                            .statusTime(site.getStatusTime())
+                            .url(site.getUrl())
+                            .name(site.getName())
+                            .build())
+        );
+
     }
 
     private void updateIndexedSite(Site site) {
